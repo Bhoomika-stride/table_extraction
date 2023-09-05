@@ -1,0 +1,7 @@
+PyMuPDF==1.22.5
+pytesseract
+timm
+transformers
+easyocr
+pdfminer
+opencv-python

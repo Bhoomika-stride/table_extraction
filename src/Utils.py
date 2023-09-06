@@ -1,4 +1,5 @@
 import fitz
+import cv2
 
 def get_doc_dimensions(doc_path):
 

@@ -5,7 +5,6 @@ import requests
 import cv2
 import numpy as np
 import os
-from google.colab.patches import cv2_imshow
 
 class DetectTable():
   def __init__(self):
@@ -58,16 +57,16 @@ class DetectTable():
 
   def execute(self,image_path,folder_name,page):
 
-    if not os.path.exists(folder_name):
-      os.mkdir(folder_name)
+    # if not os.path.exists(folder_name):
+    #   os.mkdir(folder_name)
 
     tables,_  = self.extract_table_bbox(image_path)
     # print(tables)
 
-    image=cv2.imread(image_path)
-    for i,j in enumerate(tables):
-      table_img=self.extract_bounding_box(j,image)
-      cv2_imshow(table_img)
-      cv2.imwrite(os.path.join(folder_name,f"table{i}_in_page{page}.png"),table_img)
+    # image=cv2.imread(image_path)
+    # for i,j in enumerate(tables):
+    #   table_img=self.extract_bounding_box(j,image)
+    #   # cv2.imshow("frame", table_img)
+    #   cv2.imwrite(os.path.join(folder_name,f"table{i}_in_page{page}.png"),table_img)
 
     return tables

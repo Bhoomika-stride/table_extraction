@@ -1,5 +1,6 @@
 import fitz
 import cv2
+import numpy as np
 
 class GenerateTable():
   def __init__(self,table_bbox,page_no,document):

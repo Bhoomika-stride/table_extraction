@@ -21,7 +21,7 @@ class GenerateTable():
 
 
     self.bounding_boxes = self.sort_bounding_boxes_by_y_coordinate(self.bounding_boxes)
-    # print(bounding_boxes)
+    # print("bboxes", self.bounding_boxes)
     self.rows=[]
     self.rows = self.club_all_bounding_boxes_by_similar_y_coordinates_into_rows(self.mean_height,self.bounding_boxes,self.rows)
     self.rows = self.sort_all_rows_by_x_coordinate(self.rows)
@@ -34,7 +34,6 @@ class GenerateTable():
     self.columns = self.club_all_bounding_boxes_by_similar_x_coordinates_into_columns(self.mean_width,self.bounding_boxes,self.columns)
     self.columns = self.sort_all_columns_by_y_coordinate(self.columns)
     # print(columns)
-    # print(len(columns))
 
 
     self.row_table = self.crop_each_bounding_box_and_ocr_rows(self.rows)
@@ -45,7 +44,7 @@ class GenerateTable():
 
     self.table = self.create_final_table(self.row_table,self.column_table)
 
-    # self.generate_csv_file(self.table,page_no,table_no)
+    self.generate_csv_file(self.table,page_no,table_no)
 
     table_extracted=self.generate_json(self.table,page_no,self.bbox)
     return table_extracted
@@ -133,7 +132,8 @@ class GenerateTable():
       return rows
 
   def club_all_bounding_boxes_by_similar_x_coordinates_into_columns(self,mean_width,bounding_boxes,columns):
-    half_of_mean_width = mean_width / 3.2
+    #6
+    half_of_mean_width = mean_width / 3.6
     current_column = [self.bounding_boxes[0]]
     for bounding_box in bounding_boxes[1:]:
         current_bounding_box_x = bounding_box[0]
@@ -145,7 +145,7 @@ class GenerateTable():
             columns.append(current_column)
             current_column = [bounding_box]
     columns.append(current_column)
-    # print(columns)
+    # print(len(columns), columns)
     return columns
 
   def sort_all_rows_by_x_coordinate(self,rows):
@@ -226,4 +226,5 @@ class GenerateTable():
                  "bbox":[bbox],
                  "data":table}
      return table_dict
+
 

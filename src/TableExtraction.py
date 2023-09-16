@@ -9,6 +9,7 @@ from src.OcrToTableTool import OcrToTableTool
 from src.ExtractDataBorderedScanned import ExtractDataBorderedScanned
 from src.DetectTable import DetectTable
 
+
 class TableExtraction():
 
   def __init__(self, doc_path):
@@ -16,158 +17,80 @@ class TableExtraction():
     self.doc_path = doc_path
 
     self.table_detector = DetectTable()
+    self.document = fitz.open(self.doc_path)
 
 
   def execute(self):
-    self.document = fitz.open(self.doc_path)
-    is_scanned = not self.get_pdf_searchable_pages(self.doc_path)
+
+    pages_dict = self.get_pdf_searchable_pages(self.doc_path)
     self.tables= {}
-    self.tables=self.read_pdf(is_scanned=is_scanned)
+
     self.extracted_table_list=[]
 
-    if is_scanned == False:
-      for page_no,bbox_list in self.tables.items():
+    # pages_dict['digital']=list(range(45,51))
+    for page_no in pages_dict['digital']:
 
-          doc = fitz.open(self.doc_path)
-          page = doc.load_page(page_no)
-          pix = page.get_pixmap()
-          pix.save("page_test.png")
-          is_borderless = not self.is_bodered("page_test.png")
+        page_no-=1
+        zoom_x = 1.0
+        zoom_y = 1.0
+        page = self.document[page_no]
+        mat = fitz.Matrix(zoom_x, zoom_y)
+        pix = page.get_pixmap(matrix=mat)
+        pix.save("page.png")
+        table_list,_ = self.table_detector.extract_table_bbox("/content/page.png")
+        # print(table_list)
+        if len(table_list)>0:
+          page_image=cv2.imread('page.png')
+          for table_no,bbox in enumerate(table_list):
+            cropped_image=self.extract_bounding_box(bbox,page_image)
 
-          if is_borderless == True:
+            if self.is_bodered(cropped_image):
+                extract_data = ExtractDataBordered(page_image, page_no,bbox,table_no,self.doc_path)
+                data= extract_data.execute(page_no,table_no)
+                if data["data"] != [[" "]]:
+                  self.extracted_table_list.append(data)
 
-            for i,j in enumerate(bbox_list):
-              table_gen = GenerateTable(j,page_no,self.doc_path)
-              data= table_gen.execute(page_no,i)
-              if data["data"] != [[" "]]:
-                self.extracted_table_list.append(data)
+            else :
+                table_gen = GenerateTable(bbox,page_no,self.doc_path)
+                data= table_gen.execute(page_no,table_no)
+                if data["data"] != [[" "]]:
+                  self.extracted_table_list.append(data)
 
-          else :
-            doc = fitz.open(self.doc_path)
-            page = doc.load_page(page_no)
-            pix = page.get_pixmap()
-            pix.save("page.png")
-            image = cv2.imread("page.png")
-            for table_no,bbox in enumerate(bbox_list):
-              extract_data = ExtractDataBordered(image, page_no,bbox,table_no,self.doc_path)
-              data= table_gen.execute(page_no,table_no)
-              if data["data"] != [[" "]]:
-                self.extracted_table_list.append(data)
 
-    elif is_scanned == True :
-      for page_no,bbox_list in self.tables.items():
+    for page_no in pages_dict['scanned']:
+        page_no-=1
+        zoom_x = 2.0
+        zoom_y = 2.0
+        page = self.document[page_no]
+        mat = fitz.Matrix(zoom_x, zoom_y)
+        pix = page.get_pixmap(matrix=mat)
+        pix.save("page.png")
+        table_list,_ = self.table_detector.extract_table_bbox("/content/page.png")
+        # print(table_list)
+        if len(table_list)>0:
+          page_image=cv2.imread('page.png')
+          for table_no,bbox in enumerate(table_list):
+            cropped_image=self.extract_bounding_box(bbox,page_image)
 
-          doc = fitz.open(self.doc_path)
-          page = doc.load_page(page_no)
-          pix = page.get_pixmap()
-          pix.save("page_test.png")
-          is_borderless = not self.is_bodered("page_test.png")
+            if self.is_bodered(cropped_image):
+                extract_data = ExtractDataBorderedScanned(page_image, page_no,bbox,table_no,self.doc_path)
+                data= extract_data.execute(page_no,table_no)
+                if data["data"] != [[" "]]:
+                  print("3", data)
+                  self.extracted_table_list.append(data)
 
-          if is_borderless == True:
-            zoom_x = 2.0
-            zoom_y = 2.0
-            doc = fitz.open(self.doc_path)
-            page = doc.load_page(page_no)
-            mat = fitz.Matrix(zoom_x, zoom_y)
-            pix = page.get_pixmap(matrix=mat)
-            pix.save("page.png")
-            image = cv2.imread("page.png")
-            # cv2_imshow(image)
-            for table_no,j in enumerate(bbox_list):
-              cropped_image=self.extract_bounding_box(j,image)
-              # cv2_imshow(cropped_image)
+            else :
               lines_remover = TableLinesRemover(cropped_image)
               image_without_lines = lines_remover.execute()
-              ocr_tool = OcrToTableTool(image_without_lines,cropped_image,page_no,table_no)
-              data= table_gen.execute(page_no,i)
+              ocr_tool = OcrToTableTool(image_without_lines,cropped_image,page_no,table_no,bbox)
+              data= ocr_tool.execute()
               if data["data"] != [[" "]]:
-                self.extracted_table_list.append(data)
-
-          else :
-            doc = fitz.open(self.doc_path)
-            page = doc.load_page(page_no)
-            pix = page.get_pixmap()
-            pix.save("page.png")
-            image = cv2.imread("page.png")
-            for table_no,bbox in enumerate(bbox_list):
-              extract_data = ExtractDataBorderedScanned(image, page_no,bbox,table_no,self.doc_path)
-              data= table_gen.execute(page_no,table_no)
-              if data["data"] != [[" "]]:
-                self.extracted_table_list.append(data)
-
-    elif isinstance(is_scanned, (list)):
-      digital_list = is_scanned[0]
-      scanned_list = is_scanned[1]
-      for page_no in digital_list:
-
-        bbox_list=self.tables[page_no]
-        doc = fitz.open(self.doc_path)
-        page = doc.load_page(page_no)
-        pix = page.get_pixmap()
-        pix.save("page_test.png")
-        is_borderless = not self.is_bodered("page_test.png")
-
-        if is_borderless == True:
-            for i,j in enumerate(bbox_list):
-              table_gen = GenerateTable(j,page_no,self.doc_path)
-              data= table_gen.execute(page_no,i)
-              if data["data"] != [[" "]]:
-                self.extracted_table_list.append(data)
-        else :
-            doc = fitz.open(self.doc_path)
-            page = doc.load_page(page_no)
-            pix = page.get_pixmap()
-            pix.save("page.png")
-            image = cv2.imread("page.png")
-            for table_no,bbox in enumerate(bbox_list):
-              extract_data = ExtractDataBordered(image, page_no,bbox,table_no,self.doc_path)
-              data= table_gen.execute(page_no,table_no)
-              if data["data"] != [[" "]]:
+                print("4", data)
                 self.extracted_table_list.append(data)
 
 
-      for page_no in scanned_list:
 
-          bbox_list=self.tables[page_no]
-          doc = fitz.open(self.doc_path)
-          page = doc.load_page(page_no)
-          pix = page.get_pixmap()
-          pix.save("page_test.png")
-          is_borderless = not self.is_bodered("page_test.png")
 
-          if is_borderless == True:
-            zoom_x = 2.0
-            zoom_y = 2.0
-            doc = fitz.open(self.doc_path)
-            page = doc.load_page(page_no)
-            mat = fitz.Matrix(zoom_x, zoom_y)
-            pix = page.get_pixmap(matrix=mat)
-            pix.save("page.png")
-            image = cv2.imread("page.png")
-            # cv2_imshow(image)
-            for table_no,j in enumerate(bbox_list):
-              cropped_image=self.extract_bounding_box(j,image)
-              # cv2_imshow(cropped_image)
-              lines_remover = TableLinesRemover(cropped_image)
-              image_without_lines = lines_remover.execute()
-              ocr_tool = OcrToTableTool(image_without_lines,cropped_image,page_no,table_no)
-              data= table_gen.execute(page_no,i)
-              if data["data"] != [[" "]]:
-                self.extracted_table_list.append(data)
-
-          else :
-            doc = fitz.open(self.doc_path)
-            page = doc.load_page(page_no)
-            pix = page.get_pixmap()
-            pix.save("page.png")
-            image = cv2.imread("page.png")
-            for table_no,bbox in enumerate(bbox_list):
-              extract_data = ExtractDataBorderedScanned(image, page_no,bbox,table_no,self.doc_path)
-              data= table_gen.execute(page_no,table_no)
-              if data["data"] != [[" "]]:
-                self.extracted_table_list.append(data)
-
-    print(self.extracted_table_list)
     return self.extracted_table_list
 
   def extract_bounding_box(self,bbox,image):
@@ -193,18 +116,7 @@ class TableExtraction():
             else:
                 non_searchable_pages.append(page_num)
     if page_num > 0:
-        if len(searchable_pages) == 0:
-            # print(f"Document '{fname}' has {page_num} page(s). "
-            #       f"Complete document is non-searchable")
-            return False
-        elif len(non_searchable_pages) == 0:
-            # print(f"Document '{fname}' has {page_num} page(s). "
-            #       f"Complete document is searchable")
-            return True
-        else:
-            # print(f"searchable_pages : {searchable_pages}")
-            # print(f"non_searchable_pages : {non_searchable_pages}")
-            return [searchable_pages, non_searchable_pages]
+        return {'digital':searchable_pages,"scanned":non_searchable_pages}
     else:
         print(f"Not a valid document")
 
@@ -215,14 +127,14 @@ class TableExtraction():
       table_gen = GenerateTable(j,page_no,doc_path)
       table = table_gen.execute(page_no,i)
 
-  def is_bodered(self,image_path):
+  def is_bodered(self,image):
 
-    image = cv2.imread(image_path)
+    cv2_imshow(image)
     grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     thresholded_image = cv2.threshold(grey, 250, 255, cv2.THRESH_BINARY)[1]
     inverted_image = cv2.bitwise_not(thresholded_image)
 
-    hor = np.array([[1,1,1,1,1,1, 1]])
+    hor = np.array([[1,1,1,1,1,1,1]])
     vertical_lines_eroded_image = cv2.erode(inverted_image, hor, iterations=15)
     vertical_lines_eroded_image = cv2.dilate(vertical_lines_eroded_image, hor, iterations=15)
     # cv2_imshow(vertical_lines_eroded_image)
@@ -240,11 +152,12 @@ class TableExtraction():
     # cv2_imshow(horizontal_lines_eroded_image)
 
     combined_image = cv2.add(vertical_lines_eroded_image, horizontal_lines_eroded_image)
-    # cv2_imshow(combined_image)
+    cv2_imshow(combined_image)
 
     rows, columns = self.get_rows_and_columns(r_contours, c_contours)
     # print(rows, columns)
     if len(rows) > 2 and len(columns) > 2:
+    # if (len(rows) <= 2 and len(columns) >2) or (len(rows) > 2 and len(columns) <= 2):
       if self.intersects(rows, columns):
         return True
     return False
@@ -291,8 +204,8 @@ class TableExtraction():
         pix = page.get_pixmap(matrix=mat)
         pix.save("page.png")
 
-        table_list = self.table_detector.execute("page.png","tables_cropped",page_no)
-        os.remove("page.png")
+        table_list = self.table_detector.execute("/content/page.png","tables_cropped",page_no)
+        os.remove("/content/page.png")
         if len(table_list)>=1:
           self.tables[page_no] = table_list
 
@@ -307,7 +220,7 @@ class TableExtraction():
         mat = fitz.Matrix(zoom_x, zoom_y)
         pix = page.get_pixmap(matrix=mat)
         pix.save("page.png")
-        table_list = self.table_detector.execute("page.png","tables_cropped_digital",page_no)
+        table_list = self.table_detector.execute("/content/page.png","tables_cropped_digital",page_no)
         if len(table_list)>=1:
           self.tables[page_no] = table_list
       for page_no in scanned_list:
@@ -317,8 +230,9 @@ class TableExtraction():
         mat = fitz.Matrix(zoom_x, zoom_y)
         pix = page.get_pixmap(matrix=mat)
         pix.save("page.png")
-        table_list = self.table_detector.execute("page.png","tables_cropped_scanned",page_no)
+        table_list = self.table_detector.execute("/content/page.png","tables_cropped_scanned",page_no)
         if len(table_list)>=1:
           self.tables[page_no] = table_list
 
     return self.tables
+

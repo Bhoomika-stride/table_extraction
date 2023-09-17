@@ -1,5 +1,8 @@
 import fitz
 import cv2
+import numpy as np
+import pandas as pd
+import os
 
 class ExtractDataBordered():
 
@@ -54,7 +57,7 @@ class ExtractDataBordered():
       extracted_image = cv2.bitwise_and(image, image, mask=mask)
 
       extracted_image_new = cv2.add( extracted_image, inverted_mask, mask = None)
-      cv2_imshow(extracted_image_new)
+      # cv2_imshow(extracted_image_new)
 
       return extracted_image_new
 
@@ -90,7 +93,8 @@ class ExtractDataBordered():
         self.columns = contours
 
     def store_process_image(self, image):
-        cv2_imshow(image)
+        # cv2_imshow(image)
+        pass
 
     def get_rows_and_columns(self):
       self.row_range = []

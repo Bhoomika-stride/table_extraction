@@ -1,3 +1,9 @@
+import easyocr
+import pandas as pd
+import numpy as np
+import cv2
+import os
+
 class ExtractDataBorderedScanned():
 
     def __init__(self, image, page_no,bbox,table_no,pdf_path):
@@ -53,7 +59,7 @@ class ExtractDataBorderedScanned():
         extracted_image = cv2.bitwise_and(image, image, mask=mask)
 
         extracted_image_new = cv2.add( extracted_image, inverted_mask, mask = None)
-        cv2_imshow(extracted_image_new)
+        # cv2_imshow(extracted_image_new)
 
         return extracted_image_new
 
@@ -88,7 +94,8 @@ class ExtractDataBorderedScanned():
         self.columns = contours
 
     def store_process_image(self, image):
-        cv2_imshow(image)
+        # cv2_imshow(image)
+        pass
 
     def get_rows_and_columns(self):
       self.row_range = []

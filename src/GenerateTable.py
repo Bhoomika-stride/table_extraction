@@ -44,7 +44,7 @@ class GenerateTable():
 
     self.table = self.create_final_table(self.row_table,self.column_table)
 
-    self.generate_csv_file(self.table,page_no,table_no)
+    # self.generate_csv_file(self.table,page_no,table_no)
 
     table_extracted=self.generate_json(self.table,page_no,self.bbox)
     return table_extracted

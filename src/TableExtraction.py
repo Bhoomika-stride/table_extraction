@@ -37,7 +37,7 @@ class TableExtraction():
         mat = fitz.Matrix(zoom_x, zoom_y)
         pix = page.get_pixmap(matrix=mat)
         pix.save("page.png")
-        table_list,_ = self.table_detector.extract_table_bbox("/content/page.png")
+        table_list,_ = self.table_detector.extract_table_bbox("page.png")
         # print(table_list)
         if len(table_list)>0:
           page_image=cv2.imread('page.png')
@@ -65,7 +65,7 @@ class TableExtraction():
         mat = fitz.Matrix(zoom_x, zoom_y)
         pix = page.get_pixmap(matrix=mat)
         pix.save("page.png")
-        table_list,_ = self.table_detector.extract_table_bbox("/content/page.png")
+        table_list,_ = self.table_detector.extract_table_bbox("page.png")
         # print(table_list)
         if len(table_list)>0:
           page_image=cv2.imread('page.png')
@@ -129,7 +129,7 @@ class TableExtraction():
 
   def is_bodered(self,image):
 
-    cv2_imshow(image)
+    # cv2_imshow(image)
     grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     thresholded_image = cv2.threshold(grey, 250, 255, cv2.THRESH_BINARY)[1]
     inverted_image = cv2.bitwise_not(thresholded_image)
@@ -152,7 +152,7 @@ class TableExtraction():
     # cv2_imshow(horizontal_lines_eroded_image)
 
     combined_image = cv2.add(vertical_lines_eroded_image, horizontal_lines_eroded_image)
-    cv2_imshow(combined_image)
+    # cv2_imshow(combined_image)
 
     rows, columns = self.get_rows_and_columns(r_contours, c_contours)
     # print(rows, columns)
@@ -204,8 +204,8 @@ class TableExtraction():
         pix = page.get_pixmap(matrix=mat)
         pix.save("page.png")
 
-        table_list = self.table_detector.execute("/content/page.png","tables_cropped",page_no)
-        os.remove("/content/page.png")
+        table_list = self.table_detector.execute("page.png","tables_cropped",page_no)
+        os.remove("page.png")
         if len(table_list)>=1:
           self.tables[page_no] = table_list
 
@@ -220,7 +220,7 @@ class TableExtraction():
         mat = fitz.Matrix(zoom_x, zoom_y)
         pix = page.get_pixmap(matrix=mat)
         pix.save("page.png")
-        table_list = self.table_detector.execute("/content/page.png","tables_cropped_digital",page_no)
+        table_list = self.table_detector.execute("page.png","tables_cropped_digital",page_no)
         if len(table_list)>=1:
           self.tables[page_no] = table_list
       for page_no in scanned_list:
@@ -230,7 +230,7 @@ class TableExtraction():
         mat = fitz.Matrix(zoom_x, zoom_y)
         pix = page.get_pixmap(matrix=mat)
         pix.save("page.png")
-        table_list = self.table_detector.execute("/content/page.png","tables_cropped_scanned",page_no)
+        table_list = self.table_detector.execute("page.png","tables_cropped_scanned",page_no)
         if len(table_list)>=1:
           self.tables[page_no] = table_list
 
